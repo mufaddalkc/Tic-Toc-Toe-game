@@ -10,7 +10,7 @@ import {
   checkGameOver,
 } from "./components/GameLogic";
 
-const initialMode = null; // Start with no selected mode
+const initialMode = null;
 const initialBoard = [
   [null, null, null],
   [null, null, null],
@@ -18,7 +18,7 @@ const initialBoard = [
 ];
 
 function App() {
-  const [mode, setMode] = useState(initialMode); // "computer" or "player"
+  const [mode, setMode] = useState(initialMode);
   const [player, setPlayer] = useState({
     X: "Player 1",
     O: "Player 2",
@@ -32,22 +32,32 @@ function App() {
 
   useEffect(() => {
     if (mode === "computer" && activePlayer === "O" && !isGameOver) {
-      const { row, col } = playComputerTurn(gameBoard, "O", "X");
-      handleSelectCell(row, col, true);
+      const { row, col } = playComputerTurn(
+        gameBoard,
+        "O",
+        "X",
+        player,
+        gameTurns
+      );
+      handleSelectCell(row, col, true); // Handle computer move
     }
   }, [activePlayer, mode, isGameOver]);
 
   const handleSelectCell = (row, col, isComputer = false) => {
     if (isGameOver || gameBoard[row][col]) return;
 
+    const updatedBoard = gameBoard.map((row) => row.slice());
+    const currentPlayer = isComputer ? "O" : deriveActivePlayer(gameTurns);
+
+    updatedBoard[row][col] = currentPlayer;
+
     setGameTurns((prevTurns) => {
-      const currentPlayer = isComputer ? "O" : deriveActivePlayer(prevTurns);
       const updatedTurns = [
         ...prevTurns,
         { cell: { row, col }, player: currentPlayer },
       ];
 
-      const gameStatus = checkGameOver(gameBoard, updatedTurns, player);
+      const gameStatus = checkGameOver(updatedBoard, updatedTurns, player);
       if (gameStatus.isOver) {
         setIsGameOver(true);
         setWinner(gameStatus.winner);
@@ -93,6 +103,9 @@ function App() {
         className="mode-button"
         onClick={() => {
           setMode(null);
+          setGameTurns([]); // Clear game state when changing mode
+          setIsGameOver(false);
+          setWinner(null);
           window.scrollTo(0, 0);
         }}
       >
